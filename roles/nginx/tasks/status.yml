@@ -1,0 +1,5 @@
+- name: "Get status for nginx"
+  ansible.builtin.systemd:
+    name: "nginx.service"
+    state: "status"
+  become: true

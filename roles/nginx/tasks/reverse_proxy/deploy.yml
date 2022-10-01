@@ -1,0 +1,53 @@
+---
+- name: Create nginxconfig.io directory
+  ansible.builtin.file:
+    path: "/etc/nginx/nginxconfig.io"
+    state: directory
+    mode: 0755
+    owner: root
+    group: root
+  become: true
+
+- name: Render nginx.conf
+  ansible.builtin.template:
+    src: reverse_proxy/nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+  become: true
+
+- name: Render {{ nginx_domain }}.conf
+  ansible.builtin.template:
+    src: reverse_proxy/example.com.j2
+    dest: /etc/nginx/sites-available/{{ nginx_domain }}.conf
+  become: true
+
+- name: Create link in sites-enabled
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/{{ nginx_domain }}.conf
+    dest: /etc/nginx/sites-enabled/{{ nginx_domain }}.conf
+    state: link
+  become: true
+
+- name: Render letsencrypt.conf
+  ansible.builtin.template:
+    src: reverse_proxy/letsencrypt.conf.j2
+    dest: /etc/nginx/nginxconfig.io/letsencrypt.conf
+  become: true
+
+- name: Render security.conf
+  ansible.builtin.template:
+    src: reverse_proxy/security.conf.j2
+    dest: /etc/nginx/nginxconfig.io/security.conf
+  become: true
+ 
+- name: Render proxy.conf
+  ansible.builtin.template:
+    src: reverse_proxy/proxy.conf.j2
+    dest: /etc/nginx/nginxconfig.io/proxy.conf
+  become: true
+
+- name: Render general.conf
+  ansible.builtin.template:
+    src: reverse_proxy/general.conf.j2
+    dest: /etc/nginx/nginxconfig.io/general.conf
+  become: true
+

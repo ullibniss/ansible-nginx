@@ -1,0 +1,88 @@
+---
+- name: Generating Diffie-Hellman key
+  ansible.builtin.command: "openssl dhparam -out /etc/nginx/dhparam.pem 2048"
+  changed_when: true
+  become: true
+
+- name: Create letsencrypt dir
+  ansible.builtin.file:
+    path: /var/www/_letsencrypt
+    state: directory
+    mode: 0755
+    owner: www-data
+    group: www-data
+  become: true
+
+- name: Comment ssl for cert generation
+  ansible.builtin.command: 
+    argv: 
+    - "sed" 
+    - "-i" 
+    - "-r" 
+    - 's/(listen .*443)/\1; #/g; s/(ssl_(certificate|certificate_key|trusted_certificate) )/#;#\1/g; s/(server \{)/\1\n    ssl off;/g' 
+    - "/etc/nginx/sites-available/example.com.conf"
+  changed_when: true
+  become: true
+
+- name: Check config status
+  ansible.builtin.command: "nginx -t"
+  register: status
+  changed_when: true
+  become: true
+
+- name: Output status
+  ansible.builtin.debug:
+    var: 
+    - status.stdout
+    - status.stderr
+
+- name: Start nginx
+  ansible.builtin.systemd:
+    name: "nginx.service"
+    state: "started"
+
+- name: Obtain SSL certificates
+  ansible.builtin.command: 
+    argv:
+    - "certbot" 
+    - "certonly" 
+    - "--webroot" 
+    - "-d" 
+    - "{{ nginx_domain }}" 
+    - "--email"
+    - "info@{{ nginx_domain }}" 
+    - "-w" 
+    - "/var/www/_letsencrypt"
+    - "-n" 
+    - "--agree-tos" 
+    - "--force-renewal"
+  become: true
+
+- name: Uncomment SSL related directives
+  ansible.builtin.command: 
+    argv:
+    - "sed" 
+    - "-i" 
+    - "-r" 
+    - "-z" 
+    - 's/#?; ?#//g; s/(server \{)\n    ssl off;/\1/g' 
+    - "/etc/nginx/sites-available/example.com.conf"
+  changed_when: true
+  become: true
+
+- name: Check config status
+  ansible.builtin.command: "nginx -t"
+  register: status
+  changed_when: true
+  become: true
+
+- name: Output status
+  ansible.builtin.debug:
+    var: 
+    - status.stdout
+    - status.stderr
+
+- name: Reload nginx
+  ansible.builtin.systemd:
+    name: "nginx.service"
+    state: "restarted"

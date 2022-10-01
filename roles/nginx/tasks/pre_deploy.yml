@@ -1,0 +1,35 @@
+---
+- name: Debian based block
+  block:
+    - name: Apt update
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Apt upgrade
+      ansible.builtin.apt:
+        name: "*"
+        state: latest
+
+    - name: Install packages
+      ansible.builtin.apt:
+        name:
+        - nginx
+        - certbot
+  when: ansible_facts['distribution_file_variety'] = Debian
+- name: RHEL based block
+  block:
+    - name: Yum update
+      ansible.builtin.yum:
+        update_cache: yes
+
+    - name: Yum upgrade
+      ansible.builtin.yum:
+        name: "*"
+        state: latest
+
+    - name: Install packages
+      ansible.builtin.yum:
+        name:
+        - nginx
+        - certbot
+  when: ansible_facts['distribution_file_variety'] = RedHat

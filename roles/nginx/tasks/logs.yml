@@ -1,0 +1,12 @@
+---
+- name: Get access log
+  ansible.builtin.command: cat {{ nginx_access_log }}
+  changed_when: true
+  become: true
+  when: only_error is undefined or not only_error
+
+- name: Get error log
+  ansible.builtin.command: cat {{ nginx_error_log }}
+  changed_when: true
+  become: true
+  when: only_access is undefined or not only_access
